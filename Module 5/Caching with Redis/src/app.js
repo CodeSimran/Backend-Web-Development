@@ -21,7 +21,7 @@ app.get('/feed', async (req, res) => {
     // 1. Check cache
     const cached = await cacheGet(FEED_KEY);
     if (cached) {
-      console.log(`[feed] HIT  ${Date.now() - t0}ms`);
+      console.log(`[feed] HIT ${Date.now() - t0}ms`);
       return res.set('X-Cache', 'HIT').json(cached);
     }
 
