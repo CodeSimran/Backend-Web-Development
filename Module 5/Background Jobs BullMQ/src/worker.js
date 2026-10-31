@@ -29,14 +29,15 @@ const worker = new Worker('email', async (job) => {
 
     console.log(`[worker] job ${job.id} completed`);
 }, {
-    connection,
-    defaultJobOptions: {
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
-    },
+    connection
 });
 
-worker.on('completed', (job) => console.log(`[worker] ${job.id} done`));
-worker.on('failed', (job, err) => console.error(`[worker] ${job.id} FAILED: ${err.message}`));
+worker.on('completed', (job) => {
+    console.log(`[worker] ${job.id} done`);
+});
+
+worker.on('failed', (job, err) => {
+    console.error(`[worker] ${job.id} FAILED: ${err.message}`);
+});
 
 module.exports = { worker };
