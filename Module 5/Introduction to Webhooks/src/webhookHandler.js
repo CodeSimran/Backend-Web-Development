@@ -31,14 +31,27 @@ function verifySignature(rawBody, sigHeader, secret) {
 }
 
 async function handleWebhook(req, res) {
+  const secret = process.env.WEBHOOK_SECRET;
+  if (!secret) {
+    return res.status(500).json({ error: 'Webhook secret is not configured' });
+  }
+
   // 1. Verify HMAC-SHA256 signature over raw body Buffer
   const sig = req.headers['x-webhook-signature'];
-  if (!verifySignature(req.body, sig, process.env.WEBHOOK_SECRET || 'testsecret')) {
+  if (!verifySignature(req.body, sig, secret)) {
     return res.status(401).json({ error: 'Invalid signature' });
   }
 
   // 2. Parse the body after verification
-  const event = JSON.parse(req.body);
+  let event;
+  try {
+    event = JSON.parse(req.body);
+  } catch (err) {
+    if (err instanceof SyntaxError) {
+      return res.status(400).json({ error: 'Invalid JSON' });
+    }
+    throw err;
+  }
 
   // 3. Idempotency: skip already-processed events
   if (_processedIds.has(event.id)) {

@@ -11,8 +11,9 @@ under retry conditions. You implement one file.
 
 ```
 POST /webhooks
+  require WEBHOOK_SECRET -> 500 if missing
   verify HMAC-SHA256 over raw body -> 401 if invalid/missing
-  parse body -> check event.id against processed store
+  parse body -> 400 if malformed -> check event.id against processed store
     seen   -> 200 already_processed (no re-processing)
     new    -> mark seen -> 200 received -> handleEvent(event) after response
 ```
@@ -34,10 +35,16 @@ package.json           ← express, dotenv already listed
 
 ```bash
 npm install
-cp .env.example .env      # WEBHOOK_SECRET=supersecretkey
+cp .env.example .env
+# Set WEBHOOK_SECRET in .env to a unique, random value before starting the server.
 npm start                  # runs on http://localhost:3000
-npm test                   # fails until you implement webhookHandler.js
+npm test                   # runs the webhook tests
 ```
+
+Generate a secret for local development with `openssl rand -hex 32`. Keep `.env`
+out of version control, and configure production secrets through your deployment
+platform's secret manager. The server returns `500` if `WEBHOOK_SECRET` is not
+configured; it never falls back to a built-in secret.
 
 ## What to implement
 
@@ -103,7 +110,8 @@ All tests passed! ✓
 
 1. Fork or clone this project and create a branch in your own repository.
 2. Implement `src/webhookHandler.js`.
-3. Create a `.env` file with `WEBHOOK_SECRET=supersecretkey`.
+3. Configure `WEBHOOK_SECRET` with a unique, randomly generated secret in `.env`
+   for local development or your deployment platform's secret manager.
 4. Run `npm test`, confirm `Results: 5 passed, 0 failed`.
 5. Open a PR. In the description, briefly explain: *the three steps the
    handler performs in order, and why event-id idempotency is necessary even
